@@ -3,6 +3,7 @@ package com.dicapisar.sessionManager.services;
 import com.dicapisar.sessionManager.dtos.requests.LoginRequestDTO;
 import com.dicapisar.sessionManager.dtos.responses.LoginResponseDTO;
 import com.dicapisar.sessionManager.exceptions.ErrorLoginException;
+import com.dicapisar.sessionManager.exceptions.UserDeactivatedException;
 import com.dicapisar.sessionManager.models.User;
 import com.dicapisar.sessionManager.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -21,7 +22,8 @@ public class LoginService implements ILoginService {
     private PasswordEncoder passwordEncoder;
 
     @Transactional
-    public LoginResponseDTO loginUser(LoginRequestDTO loginRequest, HttpSession session) throws ErrorLoginException {
+    public LoginResponseDTO loginUser(LoginRequestDTO loginRequest, HttpSession session)
+            throws ErrorLoginException, UserDeactivatedException {
         User user = getUser(loginRequest);
         validateUser(user, loginRequest);
         generateSession(user, session);
@@ -32,20 +34,23 @@ public class LoginService implements ILoginService {
         return userRepository.getUserByIdAndIsActive(loginRequest.getName());
     }
 
-    private void validateUser(User user, LoginRequestDTO loginRequest) throws ErrorLoginException {
+    private void validateUser(User user, LoginRequestDTO loginRequest) throws ErrorLoginException, UserDeactivatedException {
         if (user == null) {
             throw new ErrorLoginException();
         }
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new ErrorLoginException();
         }
+        if (!user.isActive()) {
+            throw new UserDeactivatedException();
+        }
     }
 
     private void generateSession(User user, HttpSession session) {
         session.setAttribute("Name", user.getName());
-        session.setAttribute("Id", user.getName());
-        session.setAttribute("Rol_Name", user.getName());
-        session.setAttribute("Rol_Id", user.getName());
+        session.setAttribute("Id", user.getId());
+        session.setAttribute("Rol_Name", user.getRol().getName());
+        session.setAttribute("Rol_Id", user.getRol().getId());
     }
 
     private LoginResponseDTO generateLoginResponse(User user, HttpSession session) {
