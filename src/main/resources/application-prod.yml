@@ -32,3 +32,6 @@ spring:
   sql:
     init:
       mode: always
+
+server:
+  port: ${PORT_SESSION_MANAGER_PROD}

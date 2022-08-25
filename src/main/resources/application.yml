@@ -1,6 +1,3 @@
 spring:
   profiles:
     active: ${SCOPE}
-
-server:
-  port: ${PORT}
